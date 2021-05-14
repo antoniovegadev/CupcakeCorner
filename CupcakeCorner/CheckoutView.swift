@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CheckoutView: View {
-    @ObservedObject var order: Order
+    @ObservedObject var order: OrderClass
     @State private var confirmationMessage = ""
     @State private var showingConfirmation = false
     
@@ -21,7 +21,7 @@ struct CheckoutView: View {
                         .scaledToFit()
                         .frame(width: geo.size.width)
                     
-                    Text("Your total is $\(order.cost, specifier: "%.2f")")
+                    Text("Your total is $\(order.item.cost, specifier: "%.2f")")
                         .font(.title)
 
                     Button("Place Order") {
@@ -51,12 +51,14 @@ struct CheckoutView: View {
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data else {
                 print("No data in response: \(error?.localizedDescription ?? "Unknown error").")
+                confirmationMessage = "Unable to perform request"
+                showingConfirmation = true
                 return
             }
             
-            if let decodedOrder = try? JSONDecoder().decode(Order.self, from: data) {
-                self.confirmationMessage = "Your order for \(decodedOrder.quantity)x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way!"
-                self.showingConfirmation = true
+            if let decodedOrder = try? JSONDecoder().decode(OrderClass.self, from: data) {
+                confirmationMessage = "Your order for \(decodedOrder.item.quantity)x \(Order.types[decodedOrder.item.type].lowercased()) cupcakes is on its way!"
+                showingConfirmation = true
             } else {
                 print("Invalid response from server")
             }
@@ -66,6 +68,6 @@ struct CheckoutView: View {
 
 struct CheckoutView_Previews: PreviewProvider {
     static var previews: some View {
-        CheckoutView(order: Order())
+        CheckoutView(order: OrderClass())
     }
 }
